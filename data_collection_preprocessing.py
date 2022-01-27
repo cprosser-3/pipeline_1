@@ -1,0 +1,362 @@
+import functools
+import re
+import sys
+import time
+
+import pandas as pd
+
+from datetime import datetime, timedelta
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from typing import *
+
+
+def clean_binary(val: str) -> int:
+    '''...'''
+    val = int(val)
+    return val \
+        if 0 <= val <= 1 \
+        else None
+
+
+def clean_date(val: str) -> str:
+    '''...'''
+    return pd.to_datetime(val).strftime('%Y-%m-%d')
+
+
+def clean_float(val: str) -> float:
+    '''...'''
+    return float(val)
+
+    
+def clean_h_a(val: str) -> str:
+    '''...'''
+    val = str.upper(val)
+    return val[0] \
+        if val[0] in 'HA' \
+        else None
+
+
+def clean_int(val: str) -> int:
+    '''...'''
+    return int(val)
+
+
+def clean_str(val: str) -> str:
+    '''...'''
+    return val
+
+
+def clean_str_lower(val: str) -> str:
+    '''...'''
+    return str.lower(val)
+
+
+def clean_str_upper(val: str) -> str:
+    '''...'''
+    return str.upper(val)
+
+
+def clean_time(val: str) -> str:
+    '''...'''
+    return pad_time(re.match(r'(\d{1,2}):(\d{1,2}):(\d{1,2})', val))
+
+
+def convert_dates(start: str, stop: str) -> Tuple[str]:
+    '''...'''
+    try:
+        stop = datetime.today().strftime('%Y-%m-%d') \
+            if stop == '' \
+            else pd.to_datetime(stop).strftime('%Y-%m-%d')
+    except:
+        print(f'An error occurred converting the stop date: {stop}...')
+
+    try:
+        start = (pd.to_datetime(stop) - timedelta(days = 30)).strftime('%Y-%m-%d') \
+            if start == '' \
+            else pd.to_datetime(start).strftime('%Y-%m-%d')
+    except:
+        print(f'An error occurred converting the start date: {start}...')
+    
+    return start, stop
+    
+    
+def get_data(path: str) -> pd.DataFrame:
+    '''...'''
+    return pd.read_csv(f'{path}/ASA All NBA Raw Data.csv', dtype = 'object')
+
+
+def handle_none(func: Callable, val: str):
+    '''...'''
+    try:
+        return None \
+            if not val or str.lower(val) == 'na' \
+            else func(val)
+    except:
+        return None
+
+
+def pad_time(match: re.Match) -> str:
+    '''...'''
+    return ':'.join([format(int(x), '02d') for x in match.groups()])
+
+
+DF_CLEAN = pd.DataFrame({
+      'game_id': pd.Series(dtype = 'str')
+    , 'game_date': pd.Series(dtype = 'str')
+    , 'OT': pd.Series(dtype = 'int')
+    , 'H_A': pd.Series(dtype = 'str')
+    , 'Team_Abbrev': pd.Series(dtype = 'str')
+    , 'Team_Score': pd.Series(dtype = 'int')
+    , 'Team_pace': pd.Series(dtype = 'float')
+    , 'Team_efg_pct': pd.Series(dtype = 'float')
+    , 'Team_tov_pct': pd.Series(dtype = 'int')
+    , 'Team_orb_pct': pd.Series(dtype = 'float')
+    , 'Team_ft_rate': pd.Series(dtype = 'float')
+    , 'Team_off_rtg': pd.Series(dtype = 'float')
+    , 'Inactives': pd.Series(dtype = 'str')
+    , 'Opponent_Abbrev': pd.Series(dtype = 'str')
+    , 'Opponent_Score': pd.Series(dtype = 'int')
+    , 'Opponent_pace': pd.Series(dtype = 'float')
+    , 'Opponent_efg_pct': pd.Series(dtype = 'float')
+    , 'Opponent_tov_pct': pd.Series(dtype = 'float')
+    , 'Opponent_orb_pct': pd.Series(dtype = 'float')
+    , 'Opponent_ft_rate': pd.Series(dtype = 'float')
+    , 'Opponent_off_rtg': pd.Series(dtype = 'float')
+    , 'player': pd.Series(dtype = 'str')
+    , 'player_id': pd.Series(dtype = 'str')
+    , 'starter': pd.Series(dtype = 'int')
+    , 'mp': pd.Series(dtype = 'str')
+    , 'fg': pd.Series(dtype = 'int')
+    , 'fga': pd.Series(dtype = 'int')
+    , 'fg_pct': pd.Series(dtype = 'float')
+    , 'fg3': pd.Series(dtype = 'int')
+    , 'fg3a': pd.Series(dtype = 'int')
+    , 'fg3_pct': pd.Series(dtype = 'float')
+    , 'ft': pd.Series(dtype = 'int')
+    , 'fta': pd.Series(dtype = 'int')
+    , 'ft_pct': pd.Series(dtype = 'float')
+    , 'orb': pd.Series(dtype = 'int')
+    , 'drb': pd.Series(dtype = 'int')
+    , 'trb': pd.Series(dtype = 'int')
+    , 'ast': pd.Series(dtype = 'int')
+    , 'stl': pd.Series(dtype = 'int')
+    , 'blk': pd.Series(dtype = 'int')
+    , 'tov': pd.Series(dtype = 'int')
+    , 'pf': pd.Series(dtype = 'int')
+    , 'pts': pd.Series(dtype = 'int')
+    , 'plus_minus': pd.Series(dtype = 'int')
+    , 'did_not_play': pd.Series(dtype = 'int')
+    , 'is_inactive': pd.Series(dtype = 'int')
+    , 'ts_pct': pd.Series(dtype = 'float')
+    , 'efg_pct': pd.Series(dtype = 'float')
+    , 'fg3a_per_fga_pct': pd.Series(dtype = 'float')
+    , 'fta_per_fga_pct': pd.Series(dtype = 'float')
+    , 'orb_pct': pd.Series(dtype = 'float')
+    , 'drb_pct': pd.Series(dtype = 'float')
+    , 'trb_pct': pd.Series(dtype = 'float')
+    , 'ast_pct': pd.Series(dtype = 'float')
+    , 'stl_pct': pd.Series(dtype = 'float')
+    , 'blk_pct': pd.Series(dtype = 'float')
+    , 'tov_pct': pd.Series(dtype = 'float')
+    , 'usg_pct': pd.Series(dtype = 'float')
+    , 'off_rtg': pd.Series(dtype = 'int')
+    , 'def_rtg': pd.Series(dtype = 'int')
+    , 'bpm': pd.Series(dtype = 'float')
+    , 'season': pd.Series(dtype = 'int')
+    , 'minutes': pd.Series(dtype = 'float')
+    , 'double_double': pd.Series(dtype = 'int')
+    , 'triple_double': pd.Series(dtype = 'int')
+    , 'DKP': pd.Series(dtype = 'float')
+    , 'FDP': pd.Series(dtype = 'float')
+    , 'SDP': pd.Series(dtype = 'float')
+    , 'DKP_per_minute': pd.Series(dtype = 'float')
+    , 'FDP_per_minute': pd.Series(dtype = 'float')
+    , 'SDP_per_minute': pd.Series(dtype = 'float')
+    , 'pf_per_minute': pd.Series(dtype = 'float')
+    , 'ts': pd.Series(dtype = 'float')
+    , 'last_60_minutes_per_game_starting': pd.Series(dtype = 'float')
+    , 'last_60_minutes_per_game_bench': pd.Series(dtype = 'float')
+    , 'PG%': pd.Series(dtype = 'int')
+    , 'SG%': pd.Series(dtype = 'int')
+    , 'SF%': pd.Series(dtype = 'int')
+    , 'PF%': pd.Series(dtype = 'int')
+    , 'C%': pd.Series(dtype = 'int')
+    , 'active_position_minutes': pd.Series(dtype = 'float')
+})
+
+
+DICT_CLEAN = {
+      'game_id': clean_str_upper
+    , 'game_date': clean_date
+    , 'OT': clean_binary
+    , 'H_A': clean_h_a
+    , 'Team_Abbrev': clean_str_upper
+    , 'Team_Score': clean_int
+    , 'Team_pace': clean_float
+    , 'Team_efg_pct': clean_float
+    , 'Team_tov_pct': clean_float
+    , 'Team_orb_pct': clean_float
+    , 'Team_ft_rate': clean_float
+    , 'Team_off_rtg': clean_float
+    , 'Inactives': clean_str
+    , 'Opponent_Abbrev': clean_str_upper
+    , 'Opponent_Score': clean_int
+    , 'Opponent_pace': clean_float
+    , 'Opponent_efg_pct': clean_float
+    , 'Opponent_tov_pct': clean_float
+    , 'Opponent_orb_pct': clean_float
+    , 'Opponent_ft_rate': clean_float
+    , 'Opponent_off_rtg': clean_float
+    , 'player': clean_str
+    , 'player_id': clean_str_lower
+    , 'starter': clean_binary
+    , 'mp': clean_time
+    , 'fg': clean_int
+    , 'fga': clean_int
+    , 'fg_pct': clean_float
+    , 'fg3': clean_int
+    , 'fg3a': clean_int
+    , 'fg3_pct': clean_float
+    , 'ft': clean_int
+    , 'fta': clean_int
+    , 'ft_pct': clean_float
+    , 'orb': clean_int
+    , 'drb': clean_int
+    , 'trb': clean_int
+    , 'ast': clean_int
+    , 'stl': clean_int
+    , 'blk': clean_int
+    , 'tov': clean_int
+    , 'pf': clean_int
+    , 'pts': clean_int
+    , 'plus_minus': clean_int
+    , 'did_not_play': clean_binary
+    , 'is_inactive': clean_binary
+    , 'ts_pct': clean_float
+    , 'efg_pct': clean_float
+    , 'fg3a_per_fga_pct': clean_float
+    , 'fta_per_fga_pct': clean_float
+    , 'orb_pct': clean_float
+    , 'drb_pct': clean_float
+    , 'trb_pct': clean_float
+    , 'ast_pct': clean_float
+    , 'stl_pct': clean_float
+    , 'blk_pct': clean_float
+    , 'tov_pct': clean_float
+    , 'usg_pct': clean_float
+    , 'off_rtg': clean_float
+    , 'def_rtg': clean_float
+    , 'bpm': clean_float
+    , 'season': clean_int
+    , 'minutes': clean_float
+    , 'double_double': clean_binary
+    , 'triple_double': clean_binary
+    , 'DKP': clean_float
+    , 'FDP': clean_float
+    , 'SDP': clean_float
+    , 'DKP_per_minute': clean_float
+    , 'FDP_per_minute': clean_float
+    , 'SDP_per_minute': clean_float
+    , 'pf_per_minute': clean_float
+    , 'ts': clean_float
+    , 'last_60_minutes_per_game_starting': clean_float
+    , 'last_60_minutes_per_game_bench': clean_float
+    , 'PG%': clean_int
+    , 'SG%': clean_int
+    , 'SF%': clean_int
+    , 'PF%': clean_int
+    , 'C%': clean_int
+    , 'active_position_minutes': clean_float
+}
+
+
+DICT_WEBDRIVERS = {
+      'chrome': webdriver.Chrome
+    , 'edge': webdriver.Edge
+    , 'firefox': webdriver.Firefox
+    , 'ie': webdriver.Ie
+    , 'safari': webdriver.Safari
+}
+
+
+def main() -> None:
+    '''
+    arg 0: type of webdriver
+        ex: chrome, edge, firefox, ie, safari
+        
+    arg 1: path for webdriver
+        ex: C:/Chromium/chromedriver.exe
+        
+    !!! need to see how the site updates the data !!!
+    arg 2: start date 
+        ex: yyyy-mm-dd
+        default: stop date - 30 days
+        
+    arg 3: stop date
+        ex: yyyy-mm-dd
+        default: current date
+        
+    arg 4: path to Downloads folder
+        ex: C:/Users/{user}/Downloads
+    '''
+    
+    # download the raw data from ASA
+    print('Downloading raw data from ASA...')
+    start, stop = convert_dates(sys.argv[2], sys.argv[3])
+    try:
+        driver = DICT_WEBDRIVERS[str.lower(sys.argv[0])](sys.argv[1])
+    except:
+        print(f'An error occurred accessing the web driver: {sys.argv[0]} at {sys.argv[1]}')
+        
+    try:
+        driver.get('https://www.advancedsportsanalytics.com/nba-raw-data')
+
+        driver.switch_to.frame(driver.find_element(By.CSS_SELECTOR, 'iframe'))
+        dates = driver.find_elements(By.TAG_NAME, 'input')
+
+        dates[0].clear()
+        dates[0].send_keys(start)
+        dates[1].clear()
+        dates[1].send_keys(stop)
+
+        time.sleep(1)
+        driver.find_element(By.ID, 'downloadData').click()
+
+        print('Waiting on download to complete...')
+        time.sleep(10)
+    except:
+        print('An error occurred accessing the page elements...')
+    
+    # get the downloaded data
+    print(f'Retrieving raw data from {sys.argv[4]}')
+    try:
+        DF_RAW = get_data(path = sys.argv[4])
+    except:
+        print('An error occurred retrieving the downloaded data...')
+        return
+        
+    # clean and copy data to new dataframe
+    try:
+        for col in DF_RAW.columns:
+            print(f'Cleaning {col}...')
+            DF_CLEAN[col] = DF_RAW[col].map(
+                functools.partial(
+                      handle_none
+                    , DICT_CLEAN[col]
+                )
+            )
+        print('All columns cleaned...')
+    except:
+        print('An error occurred cleaning the data. Stopped at {col}...')
+    
+    # ensure the clean data shape matches the raw data shape
+    if DF_RAW.shape != DF_CLEAN.shape:
+        print('An error cleaning the data, shape of raw and clean data do not match...')
+        return
+    
+    # upload the data to rivanna
+    
+    
+if __name__ == '__main__':
+    main()
