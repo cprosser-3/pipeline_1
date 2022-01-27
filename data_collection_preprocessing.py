@@ -69,11 +69,6 @@ def convert_date(date: str) -> str:
     except:
         print(f'An error occurred converting date: {date}...')
         return ''
-    
-    
-def get_data(path: str) -> pd.DataFrame:
-    '''...'''
-    return pd.read_csv(f'{path}/ASA All NBA Raw Data.csv', dtype = 'object')
 
 
 def handle_none(func: Callable, val: str):
@@ -290,12 +285,13 @@ def main() -> None:
     
     # download the raw data from ASA
     print('Downloading raw data from ASA...')
-    start, stop = convert_date(sys.argv[2]), convert_date(sys.argv[3])
     try:
         driver = DICT_WEBDRIVERS[str.lower(sys.argv[0])](sys.argv[1])
     except:
         print(f'An error occurred accessing the web driver: {sys.argv[0]} at {sys.argv[1]}')
         
+    start, stop = convert_date(sys.argv[2]), convert_date(sys.argv[3])
+    
     try:
         driver.get('https://www.advancedsportsanalytics.com/nba-raw-data')
 
@@ -318,7 +314,7 @@ def main() -> None:
     # get the downloaded data
     print(f'Retrieving raw data from {sys.argv[4]}')
     try:
-        DF_RAW = get_data(path = sys.argv[4])
+        DF_RAW = pd.read_csv(f'{sys.argv[4]}/ASA All NBA Raw Data.csv', dtype = 'object')
     except:
         print('An error occurred retrieving the downloaded data...')
         return
@@ -339,7 +335,7 @@ def main() -> None:
     
     # ensure the clean data shape matches the raw data shape
     if DF_RAW.shape != DF_CLEAN.shape:
-        print('An error cleaning the data, shape of raw and clean data do not match...')
+        print('An error occurred cleaning the data, shape of raw and clean data do not match...')
         return
     
     # upload the data to rivanna
