@@ -62,23 +62,13 @@ def clean_time(val: str) -> str:
     return pad_time(re.match(r'(\d{1,2}):(\d{1,2}):(\d{1,2})', val))
 
 
-def convert_dates(start: str, stop: str) -> Tuple[str]:
+def convert_date(date: str) -> str:
     '''...'''
     try:
-        stop = datetime.today().strftime('%Y-%m-%d') \
-            if stop == '' \
-            else pd.to_datetime(stop).strftime('%Y-%m-%d')
+        return pd.to_datetime(date).strftime('%Y-%m-%d')
     except:
-        print(f'An error occurred converting the stop date: {stop}...')
-
-    try:
-        start = (pd.to_datetime(stop) - timedelta(days = 30)).strftime('%Y-%m-%d') \
-            if start == '' \
-            else pd.to_datetime(start).strftime('%Y-%m-%d')
-    except:
-        print(f'An error occurred converting the start date: {start}...')
-    
-    return start, stop
+        print(f'An error occurred converting date: {date}...')
+        return ''
     
     
 def get_data(path: str) -> pd.DataFrame:
@@ -288,14 +278,11 @@ def main() -> None:
     arg 1: path for webdriver
         ex: C:/Chromium/chromedriver.exe
         
-    !!! need to see how the site updates the data !!!
     arg 2: start date 
         ex: yyyy-mm-dd
-        default: stop date - 30 days
         
     arg 3: stop date
         ex: yyyy-mm-dd
-        default: current date
         
     arg 4: path to Downloads folder
         ex: C:/Users/{user}/Downloads
@@ -303,7 +290,7 @@ def main() -> None:
     
     # download the raw data from ASA
     print('Downloading raw data from ASA...')
-    start, stop = convert_dates(sys.argv[2], sys.argv[3])
+    start, stop = convert_date(sys.argv[2]), convert_date(sys.argv[3])
     try:
         driver = DICT_WEBDRIVERS[str.lower(sys.argv[0])](sys.argv[1])
     except:
