@@ -331,7 +331,7 @@ def main() -> None:
             )
         print('All columns cleaned...')
     except:
-        print('An error occurred cleaning the data. Stopped at {col}...')
+        print(f'An error occurred cleaning the data. Stopped at {col}...')
     
     # ensure the clean data shape matches the raw data shape
     if DF_RAW.shape != DF_CLEAN.shape:
