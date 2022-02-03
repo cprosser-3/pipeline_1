@@ -83,7 +83,7 @@ def handle_none(func: Callable, val: str):
 
 def pad_time(match: re.Match) -> str:
     '''...'''
-    return ':'.join([format(int(x), '02d') for x in match.groups()])
+    return str.join(':', [format(int(x), '02d') for x in match.groups()])
 
 
 DF_CLEAN = pd.DataFrame({
