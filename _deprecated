@@ -267,30 +267,30 @@ DICT_WEBDRIVERS = {
 
 def main() -> None:
     '''
-    arg 0: type of webdriver
+    arg 1: type of webdriver
         ex: chrome, edge, firefox, ie, safari
         
-    arg 1: path for webdriver
+    arg 2: path for webdriver
         ex: C:/Chromium/chromedriver.exe
         
-    arg 2: start date 
+    arg 3: start date 
         ex: yyyy-mm-dd
         
-    arg 3: stop date
+    arg 4: stop date
         ex: yyyy-mm-dd
         
-    arg 4: path to Downloads folder
+    arg 5: path to Downloads folder
         ex: C:/Users/{user}/Downloads
     '''
     
     # download the raw data from ASA
     print('Downloading raw data from ASA...')
     try:
-        driver = DICT_WEBDRIVERS[str.lower(sys.argv[0])](sys.argv[1])
+        driver = DICT_WEBDRIVERS[str.lower(sys.argv[1])](sys.argv[2])
     except:
-        print(f'An error occurred accessing the web driver: {sys.argv[0]} at {sys.argv[1]}')
+        print(f'An error occurred accessing the web driver: {sys.argv[1]} at {sys.argv[2]}')
         
-    start, stop = convert_date(sys.argv[2]), convert_date(sys.argv[3])
+    start, stop = convert_date(sys.argv[3]), convert_date(sys.argv[4])
     
     try:
         driver.get('https://www.advancedsportsanalytics.com/nba-raw-data')
@@ -312,9 +312,9 @@ def main() -> None:
         print('An error occurred accessing the page elements...')
     
     # get the downloaded data
-    print(f'Retrieving raw data from {sys.argv[4]}')
+    print(f'Retrieving raw data from {sys.argv[5]}')
     try:
-        DF_RAW = pd.read_csv(f'{sys.argv[4]}/ASA All NBA Raw Data.csv', dtype = 'object')
+        DF_RAW = pd.read_csv(f'{sys.argv[5]}/ASA All NBA Raw Data.csv', dtype = 'object')
     except:
         print('An error occurred retrieving the downloaded data...')
         return
@@ -331,7 +331,7 @@ def main() -> None:
             )
         print('All columns cleaned...')
     except:
-        print(f'An error occurred cleaning the data. Stopped at {col}...')
+        print('An error occurred cleaning the data. Stopped at {col}...')
     
     # ensure the clean data shape matches the raw data shape
     if DF_RAW.shape != DF_CLEAN.shape:
