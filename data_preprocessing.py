@@ -79,7 +79,7 @@ def clean_player_team(val: str) -> str:
 def clean_reboundtype(val: str) -> int:
     '''Cleans: ReboundType, converts to bit'''
     try:
-        return val.lower() == 'offensive'
+        return int(val.lower() == 'offensive')
     except:
         return None
 
@@ -95,7 +95,7 @@ def clean_shottype(val: str) -> str:
 def clean_shot_outcome(val: str) -> int:
     '''Cleans: shot attempts, converts to bit'''
     try:
-        return val.lower() == 'make'
+        return int(val.lower() == 'make')
     except:
         return None
 
